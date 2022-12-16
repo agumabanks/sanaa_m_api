@@ -1,0 +1,47 @@
+extend type Query {
+    delivery_times(
+        language: String @eq
+        text: String @where(operator: "like", key: "title")
+        orderBy: _ @orderBy(columns: ["updated_at", "created_at", "title"])
+    ): [DeliveryTime!]! @all
+
+    delivery_time(id: ID! @eq, language: String @eq): DeliveryTime! @find
+}
+
+type DeliveryTime {
+    id: ID!
+    title: String!
+    slug: String
+    language: String
+    translated_languages: [String]
+    description: String
+    icon: String
+    created_at: DateTime
+    updated_at: DateTime
+}
+
+input CreateDeliveryTimeInput {
+    title: String!
+    language: String
+    description: String
+    icon: String
+}
+input UpdateDeliveryTimeInput {
+    id: ID!
+    title: String!
+    language: String
+    description: String
+    icon: String
+}
+
+extend type Mutation {
+    deleteDeliveryTime(id: ID!): DeliveryTime
+        @delete
+        @can(ability: "super_admin")
+    updateDeliveryTime(input: UpdateDeliveryTimeInput! @spread): DeliveryTime
+        @update
+        @can(ability: "super_admin")
+    createDeliveryTime(input: CreateDeliveryTimeInput! @spread): DeliveryTime
+        @create
+        @can(ability: "super_admin")
+}

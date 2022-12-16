@@ -1,0 +1,21 @@
+extend type Query {
+    wishlists: [Product!]!
+        @paginate(
+            builder: "Marvel\\GraphQL\\Queries\\UserQuery@fetchWishlists"
+            defaultCount: 15
+        )
+    in_wishlist(product_id: ID!): Boolean
+        @field(resolver: "UserQuery@inWishlist")
+}
+
+input CreateWishlistInput {
+    product_id: ID! @rules(apply: ["required", "exists:products,id"])
+}
+extend type Mutation {
+    # createWishlist(input: CreateWishlistInput! @spread): Wishlist
+    # @field(resolver: "WishlistMutator@store")
+    toggleWishlist(input: CreateWishlistInput! @spread): Boolean
+        @field(resolver: "WishlistMutator@toggle")
+    deleteWishlist(slug: String!): Boolean
+        @field(resolver: "WishlistMutator@delete")
+}

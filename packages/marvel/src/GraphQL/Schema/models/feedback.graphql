@@ -1,0 +1,16 @@
+extend type Query {
+    feedbacks: [Feedback!]! @all @can(ability: "super_admin")
+    feedback(id: ID @eq): Review @find @can(ability: "super_admin")
+}
+
+input CreateFeedbackInput {
+    model_id: ID! @rules(apply: ["required"])
+    model_type: String @rules(apply: ["required"])
+    positive: Boolean
+    negative: Boolean
+}
+
+extend type Mutation {
+    createFeedback(input: CreateFeedbackInput! @spread): Feedback
+        @field(resolver: "FeedbackMutator@store")
+}

@@ -1,0 +1,40 @@
+extend type Query {
+    languages(
+        text: String @where(operator: "like", key: "language_name")
+        orderBy: _
+            @orderBy(columns: ["updated_at", "created_at", "language_name"])
+    ): [Language!]! @all
+
+    language(id: ID! @eq): Language! @find
+}
+
+type Language {
+    id: ID!
+    language_name: String!
+    language_code: String!
+    flag: String!
+    created_at: DateTime
+    updated_at: DateTime
+}
+
+input CreateLanguageInput {
+    language_name: String!
+    language_code: String!
+    flag: String!
+}
+input UpdateLanguageInput {
+    id: ID!
+    language_name: String!
+    language_code: String!
+    flag: String!
+}
+
+extend type Mutation {
+    deleteLanguage(id: ID!): Language @delete @can(ability: "super_admin")
+    updateLanguage(input: UpdateLanguageInput! @spread): Language
+        @update
+        @can(ability: "super_admin")
+    createLanguage(input: CreateLanguageInput! @spread): Language
+        @create
+        @can(ability: "super_admin")
+}

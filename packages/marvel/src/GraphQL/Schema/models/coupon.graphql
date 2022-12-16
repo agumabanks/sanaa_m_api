@@ -1,0 +1,94 @@
+extend type Query {
+    coupons(
+        text: String @where(operator: "like", key: "code")
+        language: String @eq
+        orderBy: _
+            @orderBy(
+                columns: [
+                    "created_at"
+                    "updated_at"
+                    "code"
+                    "amount"
+                    "expire_at"
+                    "active_from"
+                ]
+            )
+    ): [Coupon!]! @paginate(defaultCount: 15)
+    coupon(id: ID @eq, code: String @eq, language: String @eq): Coupon @find
+}
+
+type Coupon {
+    id: ID!
+    code: String!
+    description: String
+    orders: [Order] @hasMany
+    type: CouponType!
+    language: String
+    translated_languages: [String]
+    image: Attachment
+    is_valid: Boolean
+    amount: Float!
+    active_from: String!
+    expire_at: String!
+    created_at: DateTime
+    updated_at: DateTime
+}
+
+input CreateCouponInput {
+    code: String!
+        @rules(
+            apply: ["max:20"]
+            messages: {
+                max: "Code should be min 20 character"
+            }
+        )
+    type: CouponType!
+    language: String
+    amount: Float!
+    description: String
+        @rules(
+            apply: ["max:1000"]
+            messages: { max: "Description should be max 1000 character" }
+        )
+    image: AttachmentInput
+    active_from: String!
+    expire_at: String!
+}
+
+input UpdateCouponInput {
+    id: ID!
+    code: String
+        @rules(
+            apply: ["max:20"]
+            messages: {
+                max: "Code should be min 20 character"
+            }
+        )
+    type: CouponType!
+    amount: Float!
+    language: String
+    description: String
+        @rules(
+            apply: ["max:1000"]
+            messages: { max: "Description should be max 1000 character" }
+        )
+    image: AttachmentInput
+    active_from: String!
+    expire_at: String!
+}
+
+type VerifyCouponResponse {
+    is_valid: Boolean!
+    coupon: Coupon
+}
+
+extend type Mutation {
+    createCoupon(input: CreateCouponInput! @spread): Coupon
+        @field(resolver: "CouponMutator@store")
+    updateCoupon(input: UpdateCouponInput! @spread): Coupon
+        @field(resolver: "CouponMutator@update")
+    deleteCoupon(id: ID!): Coupon @delete @can(ability: "super_admin")
+    verifyCoupon(code: String!): VerifyCouponResponse
+        @field(resolver: "CouponMutator@verify")
+    restoreCoupon(id: ID!): Coupon @restore @can(ability: "super_admin")
+}

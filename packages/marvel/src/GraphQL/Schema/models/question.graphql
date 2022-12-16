@@ -1,0 +1,54 @@
+extend type Query {
+    questions(
+        product_id: ID @eq
+        shop_id: ID @eq
+        question: String @where(operator: "like", key: "question")
+        answer: String = "null" @where(operator: "!=", key: "answer")
+        orderBy: _ @orderBy(columns: ["created_at"])
+    ): [Question!]! @paginate(defaultCount: 15)
+    all_questions(
+        shop_id: ID @eq
+        orderBy: _ @orderBy(columns: ["created_at"])
+    ): [Question!]! @paginate(defaultCount: 15)
+    myQuestions(
+        orderBy: _ @orderBy(columns: ["created_at"])
+    ): [Question!]! @paginate(defaultCount: 15) @whereAuth(relation: "user")
+    question(id: ID @eq): Question @find @can(ability: "super_admin")
+}
+
+type Question {
+    id: ID!
+    question: String
+    answer: String
+    user: User @belongsTo
+    user_id: ID
+    product: Product @belongsTo
+    product_id: ID
+    shop: Shop @belongsTo
+    shop_id: ID
+    feedbacks: [Feedback] @morphMany
+    positive_feedbacks_count: Int
+    negative_feedbacks_count: Int
+    abusive_reports_count: Int
+    my_feedback: Feedback
+    created_at: String
+    updated_at: String
+}
+
+input CreateQuestionInput {
+    question: String! @rules(apply: ["required", "max:255"])
+    product_id: ID! @rules(apply: ["required", "exists:products,id"])
+    shop_id: ID! @rules(apply: ["required", "exists:shops,id"])
+}
+
+input UpdateQuestionInput {
+    answer: String! @rules(apply: ["required"])
+}
+
+extend type Mutation {
+    createQuestion(input: CreateQuestionInput! @spread): Question
+        @field(resolver: "QuestionMutator@store")
+    updateQuestion(id: ID!, input: UpdateQuestionInput! @spread): Question
+        @field(resolver: "QuestionMutator@updateQuestion")
+    deleteQuestion(id: ID!): Question @delete @can(ability: "super_admin")
+}

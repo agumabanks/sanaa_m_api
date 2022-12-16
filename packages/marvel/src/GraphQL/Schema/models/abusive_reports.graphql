@@ -1,0 +1,44 @@
+extend type Query {
+    abusive_reports(
+        orderBy: _ @orderBy(columns: ["created_at"])
+    ): [AbusiveReport!]! @paginate(defaultCount: 15)
+    myReports(
+        orderBy: _ @orderBy(columns: ["created_at"])
+    ): [AbusiveReport!]! @paginate(defaultCount: 15) @whereAuth(relation: "user")
+    abusive_report(id: ID @eq): AbusiveReport @find @can(ability: "super_admin")
+}
+type AbusiveReport {
+    id: ID!
+    user_id: ID!
+    user: User @belongsTo
+    model_id: Int
+    model_type: String
+    message: String
+    created_at: String
+    updated_at: String
+}
+
+input CreateAbusiveReportInput {
+    model_id: ID! @rules(apply: ["required", "integer"])
+    model_type: String! @rules(apply: ["required"])
+    message: String! @rules(apply: ["required"])
+}
+
+input AcceptAbusiveReportInput {
+    model_id: ID! @rules(apply: ["required", "integer"])
+    model_type: String! @rules(apply: ["required"])
+}
+
+extend type Mutation {
+    createAbusiveReport(
+        input: CreateAbusiveReportInput! @spread
+    ): AbusiveReport @field(resolver: "AbusiveReportMutator@store")
+    acceptAbusiveReport(
+        input: AcceptAbusiveReportInput! @spread
+    ): AbusiveReport @field(resolver: "AbusiveReportMutator@accept")
+    rejectAbusiveReport(input: AcceptAbusiveReportInput! @spread): Review
+        @field(resolver: "AbusiveReportMutator@reject")
+    deleteAbusiveReport(id: ID!): AbusiveReport
+        @delete
+        @can(ability: "super_admin")
+}

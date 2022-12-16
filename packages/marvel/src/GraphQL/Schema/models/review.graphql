@@ -1,0 +1,58 @@
+extend type Query {
+    reviews(
+        product_id: ID @eq
+        shop_id: ID @eq
+        rating: Int @eq
+        orderBy: _ @orderBy(columns: ["created_at", "rating"])
+    ): [Review!]! @paginate(defaultCount: 15)
+    review(id: ID @eq): Review @find @can(ability: "super_admin")
+}
+
+type Review {
+    id: ID!
+    comment: String
+    rating: String
+    photos: [Attachment]
+    user: User @belongsTo
+    user_id: ID
+    order_id: ID
+    product: Product @belongsTo
+    product_id: ID
+    variation_option_id: ID
+    shop: Shop @belongsTo
+    shop_id: ID
+    feedbacks: [Feedback] @morphMany
+    positive_feedbacks_count: Int
+    negative_feedbacks_count: Int
+    abusive_reports_count: Int
+    abusive_reports: [AbusiveReport] @morphMany
+    my_feedback: Feedback
+    created_at: String
+    updated_at: String
+}
+
+input CreateReviewInput {
+    comment: String! @rules(apply: ["required", "max:255"])
+    product_id: ID! @rules(apply: ["required", "exists:products,id"])
+    order_id: ID! @rules(apply: ["required", "exists:orders,id"])
+    variation_option_id: ID @rules(apply: ["exists:variation_options,id"])
+    shop_id: ID! @rules(apply: ["required"])
+    rating: Int! @rules(apply: ["required", "integer", "min:1", "max:5"])
+    photos: [AttachmentInput]
+}
+
+input UpdateReviewInput {
+    comment: String! @rules(apply: ["required", "max:255"])
+    rating: Int! @rules(apply: ["required", "integer", "min:1", "max:5"])
+    order_id: ID! @rules(apply: ["required", "exists:orders,id"])
+    variation_option_id: ID @rules(apply: ["exists:variation_options,id"])
+    photos: [AttachmentInput]
+}
+
+extend type Mutation {
+    createReview(input: CreateReviewInput! @spread): Review
+        @field(resolver: "ReviewMutator@store")
+    updateReview(id: ID!, input: UpdateReviewInput! @spread): Review
+        @update
+    deleteReview(id: ID!): Review @delete @can(ability: "super_admin")
+}
